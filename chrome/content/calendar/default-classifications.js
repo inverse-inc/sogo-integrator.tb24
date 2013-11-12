@@ -6,7 +6,7 @@ function jsInclude(files, target) {
             loader.loadSubScript(files[i], target);
         }
         catch(e) {
-            dump("categories.js: failed to include '" + files[i] + "'\n" + e + "\n");
+            dump("default-classification.js: failed to include '" + files[i] + "'\n" + e + "\n");
         }
     }
 }

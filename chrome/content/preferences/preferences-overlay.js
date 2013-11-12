@@ -6,7 +6,7 @@ function jsInclude(files, target) {
             loader.loadSubScript(files[i], target);
         }
         catch(e) {
-            dump("folder-handler.js: failed to include '" + files[i] + "'\n" + e +
+            dump("preferences-overlay.js: failed to include '" + files[i] + "'\n" + e +
                  "\nFile: " + e.fileName +
                  "\nLine: " + e.lineNumber + "\n\n Stack:\n\n" + e.stack);
         }
@@ -15,9 +15,30 @@ function jsInclude(files, target) {
 
 jsInclude(["chrome://inverse-library/content/sogoWebDAV.js",
            "chrome://sogo-integrator/content/addressbook/categories.js",
-           "chrome://sogo-integrator/content/calendar/default-classifications.js"]);
+           "chrome://sogo-integrator/content/calendar/default-classifications.js",
+           "chrome://sogo-integrator/content/messenger/mails-labels.js"]);
+
 let gSICategoriesChanged = false;
 let gSIDefaultClassificationsChanged = false;
+let gSIMailsLabelsChanged = false;
+
+function SIMailsLabelsObserver() {
+
+}
+
+SIMailsLabelsObserver.prototype = {
+    
+    observe: function(subject, topic, data) {
+        gSIMailsLabelsChanged = true;
+    },
+
+    QueryInterface: function(aIID) {
+        if (!aIID.equals(Components.interfaces.nsIObserver)
+            && !aIID.equals(Components.interfaces.nsISupports))
+            throw Components.results.NS_ERROR_NO_INTERFACE;
+        return this;
+    }
+};
 
 function SIPrefsOnLoad() {
     /* contacts categories */
@@ -57,6 +78,12 @@ function SIPrefsOnLoad() {
         let pref = document.getElementById("calendar." + branchName + ".default-classification");
         pref.addEventListener("change", classChangeListener, false);
     }
+
+    /* mail labels */
+    let labelsObserver = new SIMailsLabelsObserver();
+    let prefService = Components.classes["@mozilla.org/preferences-service;1"]
+        .getService(Components.interfaces.nsIPrefBranch);    
+    prefService.addObserver("mailnews.tags.", labelsObserver, false);
 }
 
 function SIPrefsOnUnload() {
@@ -65,6 +92,9 @@ function SIPrefsOnUnload() {
     }
     if (gSIDefaultClassificationsChanged) {
         SICalendarDefaultClassifications.synchronizeToServer();
+    }
+    if (gSIMailsLabelsChanged) {
+        SIMailsLabels.synchronizeToServer();
     }
 }
 

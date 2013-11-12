@@ -6,7 +6,7 @@ function jsInclude(files, target) {
             loader.loadSubScript(files[i], target);
         }
         catch(e) {
-            dump("folders-updates.js: failed to include '" + files[i] + "'\n" + e +
+            dump("folders-update.js: failed to include '" + files[i] + "'\n" + e +
                  "\nFile: " + e.fileName +
                  "\nLine: " + e.lineNumber + "\n\n Stack:\n\n" + e.stack);
         }
@@ -19,7 +19,8 @@ jsInclude(["chrome://sogo-integrator/content/sogo-config.js",
            "chrome://sogo-integrator/content/addressbook/folder-handler.js",
            "chrome://sogo-integrator/content/addressbook/categories.js",
            "chrome://sogo-integrator/content/calendar/folder-handler.js",
-           "chrome://sogo-integrator/content/calendar/default-classifications.js"]);
+           "chrome://sogo-integrator/content/calendar/default-classifications.js",
+           "chrome://sogo-integrator/content/messenger/mails-labels.js",]);
 
 function directoryChecker(type, handler) {
     this.type = type;
@@ -233,83 +234,76 @@ directoryChecker.prototype = {
 
 function checkFolders() {
     let console = Components.classes["@mozilla.org/consoleservice;1"]
-                            .getService(Components.interfaces.nsIConsoleService);
+        .getService(Components.interfaces.nsIConsoleService);
+    
+    let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+        .getService(Components.interfaces.mozIJSSubScriptLoader);
+    if (GroupDavSynchronizer) {
+        /* sogo-connector is recent enough for a clean synchronization,
+           otherwise, missing messy symbols will cause exceptions to be
+           thrown */
+        
+        cleanupAddressBooks();
+        let handler = new AddressbookHandler();
+        let ABChecker = new directoryChecker("Contacts", handler);
+        ABChecker.checkAvailability(function() {
+            ABChecker.start();
+            handler.ensurePersonalIsRemote();
+            handler.ensureAutoComplete();
+            SIContactCategories.synchronizeFromServer();
+            startFolderSync();
+        });
+    }
 
-/*    let gExtensionManager = Components.classes["@mozilla.org/extensions/manager;1"]
-                                      .getService(Components.interfaces.nsIExtensionManager);
-    let connectorItem = gExtensionManager.getItemForID("sogo-connector@inverse.ca");
-    if (connectorItem
-        && checkExtensionVersion(connectorItem.version, "3.100")) { */
-        let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
-                               .getService(Components.interfaces.mozIJSSubScriptLoader);
-        if (GroupDavSynchronizer) {
-            /* sogo-connector is recent enough for a clean synchronization,
-             otherwise, missing messy symbols will cause exceptions to be
-             thrown */
+    //
+    // We synchronize mail labels
+    //
+    SIMailsLabels.synchronizeFromServer();
+    SIMailsLabels.synchronizeToServer();
 
-            cleanupAddressBooks();
-            let handler = new AddressbookHandler();
-            let ABChecker = new directoryChecker("Contacts", handler);
-            ABChecker.checkAvailability(function() {
-                                            ABChecker.start();
-                                            handler.ensurePersonalIsRemote();
-                                            handler.ensureAutoComplete();
-                                            SIContactCategories.synchronizeFromServer();
-                                            startFolderSync();
-                                        });
+    //
+    //
+    //
+    let handler;
+    try {
+        handler = new CalendarHandler();
         }
-    // }
-    // else {
-    //     console.logStringMessage("You must use at least SOGo Connector 3.1 with this version of SOGo Integrator.");
-    // }
-
-
-    // let lightningItem = gExtensionManager.getItemForID("{e2fda1a4-762b-4020-b5ad-a41df1933103}");
-    // if (lightningItem
-    //     && checkExtensionVersion(lightningItem.version, "1.0")) {
-        let handler;
-        try {
-            handler = new CalendarHandler();
-        }
-        catch(e) {
-            // if lightning is not installed, an exception will be thrown so we
-            // need to catch it to keep the synchronization process alive
-            handler = null;
-        }
-        if (handler) {
-            let CalendarChecker = new directoryChecker("Calendar", handler);
-            CalendarChecker.checkAvailability(function() {
-                                                  if (document) {
-                                                      let toolbar = document.getElementById("subscriptionToolbar");
-                                                      if (toolbar) {
-                                                          toolbar.collapsed = false;
-                                                      }
-                                                  }
-                                                  let prefService = (Components.classes["@mozilla.org/preferences-service;1"]
-                                                                     .getService(Components.interfaces.nsIPrefBranch));
-                                                  let disableCalendaring;
-                                                  try {
-                                                      disableCalendaring
-                                                          = prefService.getBoolPref("sogo-integrator.disable-calendaring");
-                                                  }
-                                                  catch(e) {
-                                                      disableCalendaring = false;
-                                                  }
-                                                  if (disableCalendaring) {
-                                                      CalendarChecker.removeAllExisting();
-                                                      hideLightningWidgets("true");
-                                                  }
-                                                  else {
-                                                      SICalendarDefaultClassifications.synchronizeFromServer();
-                                                      handler.removeHomeCalendar();
-                                                      CalendarChecker.start();
-                                                      // hideLightningWidgets("false");
-                                                  }
-                                              });
-        }
-    // } else {
-    //     console.logStringMessage("You must use at least Mozilla Lightning 1.0 with this version of SOGo Integrator.");
-    // }
+    catch(e) {
+        // if lightning is not installed, an exception will be thrown so we
+        // need to catch it to keep the synchronization process alive
+        handler = null;
+    }
+    if (handler) {
+        let CalendarChecker = new directoryChecker("Calendar", handler);
+        CalendarChecker.checkAvailability(function() {
+            if (document) {
+                let toolbar = document.getElementById("subscriptionToolbar");
+                if (toolbar) {
+                    toolbar.collapsed = false;
+                }
+            }
+            let prefService = (Components.classes["@mozilla.org/preferences-service;1"]
+                               .getService(Components.interfaces.nsIPrefBranch));
+            let disableCalendaring;
+            try {
+                disableCalendaring
+                    = prefService.getBoolPref("sogo-integrator.disable-calendaring");
+            }
+            catch(e) {
+                disableCalendaring = false;
+            }
+            if (disableCalendaring) {
+                CalendarChecker.removeAllExisting();
+                hideLightningWidgets("true");
+            }
+            else {
+                SICalendarDefaultClassifications.synchronizeFromServer();
+                handler.removeHomeCalendar();
+                CalendarChecker.start();
+                // hideLightningWidgets("false");
+            }
+        });
+    }
 
     dump("startup done\n");
 }

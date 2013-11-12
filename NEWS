@@ -1,4 +1,8 @@
-17.0.4 (YYYY-MM-DD)
+24.0.1
+------
+- we now synchronize mails labels to and from SOGo
+
+17.0.4
 ------
 - updated Czech translation
 

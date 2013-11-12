@@ -1,3 +1,8 @@
+2013-11-12  Ludovic Marcotte  <lmarcotte@inverse.ca>
+
+	* added the capability to synchronize mail labels from and to
+	  SOGo using DAV requests.
+
 2012-07-10  Jean Raby  <jraby@inverse.ca>
 
 	* chrome/content/calendar/calendar-overlay.js	(openCalendarUnsubscriptionDialog):
