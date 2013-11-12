@@ -259,7 +259,6 @@ function checkFolders() {
     // We synchronize mail labels
     //
     SIMailsLabels.synchronizeFromServer();
-    SIMailsLabels.synchronizeToServer();
 
     //
     //
