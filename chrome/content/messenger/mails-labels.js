@@ -42,15 +42,16 @@ let SIMailsLabels = {
             }
             else {
                 name = pref.substring(0, pref.length-6);
-                color = prefBranch.getCharPref(pref);
                 
+                color = prefBranch.getCharPref(pref);
+
                 if (!labelsColors[name]) {
                     labelsColors[name] = [];
                 }
                 labelsColors[name].push(color);
             }
         }
-
+        
         let collectionURL = sogoBaseURL() + "Mail/";
         let proppatch = new sogoWebDAV(collectionURL, null, null, true);
         
@@ -58,7 +59,13 @@ let SIMailsLabels = {
         
         for each (let name in Object.keys(labelsColors)) {
             labelsxml += "<i:" + name + ">" + xmlEscape(labelsColors[name][0]) +  "</i:" + name + ">";
-            labelsxml += "<i:" + name + ">" + xmlEscape(labelsColors[name][1]) +  "</i:" + name + ">";
+
+            let color = labelsColors[name][1];
+            if (typeof(color) == "undefined") {
+                color = "#000000";
+            }
+            
+            labelsxml += "<i:" + name + ">" + xmlEscape(color) +  "</i:" + name + ">";
         }
         
         labelsxml += "</i:mails-labels>";
