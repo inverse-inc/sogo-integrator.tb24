@@ -58,14 +58,13 @@ let SIMailsLabels = {
         let labelsxml = "<i:mails-labels>";
         
         for each (let name in Object.keys(labelsColors)) {
-            labelsxml += "<i:" + name + ">" + xmlEscape(labelsColors[name][0]) +  "</i:" + name + ">";
 
             let color = labelsColors[name][1];
             if (typeof(color) == "undefined") {
                 color = "#000000";
             }
             
-            labelsxml += "<i:" + name + ">" + xmlEscape(color) +  "</i:" + name + ">";
+            labelsxml += "<i:label id=\"" + name + "\" color=\"" + color + "\">" + xmlEscape(labelsColors[name][0]) +  "</i:label>";
         }
         
         labelsxml += "</i:mails-labels>";
@@ -83,38 +82,39 @@ let SIMailsLabels = {
         let mailsLabelsListener = {
             onDAVQueryComplete: function onDAVQueryComplete(status, response, headers) {
                 if (status == 207) {
-                    let jsonResponse = response["multistatus"][0]["response"][0];
-                    let propstats = jsonResponse["propstat"];
-                    
                     let prefService = Components.classes["@mozilla.org/preferences-service;1"]
                         .getService(Components.interfaces.nsIPrefBranch);
-
+                    
                     prefService.deleteBranch("mailnews.tags");
+                    
+  
+                    // We'll get something like that:
+                    //
+                    //  <n1:label color="#f00" id="$label1">Important</n1:label>
+                    //  <n1:label color="#ff9a00" id="$label2">Work</n1:label>
+                    //  <n1:label color="#009a00" id="$label3">Personal</n1:label>
+                    //  <n1:label color="#3130ff" id="$label4">To Do</n1:label>
+                    //  <n1:label color="#9c309c" id="$label5">Later</n1:label>
+                    //
+                    let multistatus = response.documentElement;
+                    let labels = multistatus.getElementsByTagName("n1:label");
 
-                    for (let i = 0; i < propstats.length; i++) {
-                        let propstat = propstats[i];
-                        if (propstat["status"][0].indexOf("200") > 0
-                            && propstat["prop"][0]
-                            && propstat["prop"][0]["mails-labels"][0]) {
-                            //
-                            // We'll get something like that:
-                            //
-                            // {"label1":["Important","#f00"],"label2":["Work","#ff9a00"],"label3":["Personal","#009a00"],"label4":["To Do","#3130ff"],"label5":["Later","#0000FF"]}
-                            //
-                            let labels = propstat["prop"][0]["mails-labels"][0]
+                     for (let i = 0; i < labels.length; i++) {
+                         let label = labels.item(i);
+                        
+                         let id = label.getAttribute("id");
+                         let color = label.getAttribute("color");
+                         let name = label.innerHTML;
 
-                            for (let name in labels) {
-                                prefService.setCharPref("mailnews.tags." + name + ".tag", labels[name][0]);
-                                prefService.setCharPref("mailnews.tags." + name + ".color", labels[name][1].toUpperCase());
-                            }
-                        }
-                    }
+                         prefService.setCharPref("mailnews.tags." + id + ".tag", name);
+                         prefService.setCharPref("mailnews.tags." + id + ".color", color.toUpperCase());
+                     }
                 }
             }
-        };
+        }
 
         let properties = ["urn:inverse:params:xml:ns:inverse-dav mails-labels"];
-        let propfind = new sogoWebDAV(sogoBaseURL() + "Mail", mailsLabelsListener);
+        let propfind = new sogoWebDAV(sogoBaseURL() + "Mail", mailsLabelsListener, undefined, undefined, false);
         propfind.propfind(properties, false);
     }
 };
