@@ -17,54 +17,24 @@ jsInclude(["chrome://inverse-library/content/sogoWebDAV.js",
 let SIMailsLabels = {
     synchronizeToServer: function SIML_synchronizeToServer() {
 
-        let prefService = Components.classes["@mozilla.org/preferences-service;1"]
-            .getService(Components.interfaces.nsIPrefBranch);
-        
-        let prefBranch = prefService.getBranch("mailnews.tags.");
-        let prefs = prefBranch.getChildList("", {});
-        
-        var labelsColors = {};
-
-        for each (let pref in prefs) {
-
-            let name;
-            let label;
-            let color;
-
-            if (pref.endsWith(".tag")) {
-                name = pref.substring(0, pref.length-4);
-                label = prefBranch.getCharPref(pref);
-
-                if (!labelsColors[name]) {
-                    labelsColors[name] = [];
-                }
-                labelsColors[name].splice(0, 0, label);
-            }
-            else {
-                name = pref.substring(0, pref.length-6);
-                
-                color = prefBranch.getCharPref(pref);
-
-                if (!labelsColors[name]) {
-                    labelsColors[name] = [];
-                }
-                labelsColors[name].push(color);
-            }
-        }
-        
         let collectionURL = sogoBaseURL() + "Mail/";
         let proppatch = new sogoWebDAV(collectionURL, null, null, true);
         
         let labelsxml = "<i:mails-labels>";
         
-        for each (let name in Object.keys(labelsColors)) {
+        let tagArray = MailServices.tags.getAllTags({});
+        
+        for (let j = 0; j < tagArray.length; j++) {
 
-            let color = labelsColors[name][1];
-            if (typeof(color) == "undefined") {
+            let key = tagArray[j].key;
+            let name = MailServices.tags.getTagForKey(key);
+            let color =  MailServices.tags.getColorForKey(key);
+            
+            if (!color) {
                 color = "#000000";
             }
             
-            labelsxml += "<i:label id=\"" + name + "\" color=\"" + color + "\">" + xmlEscape(labelsColors[name][0]) +  "</i:label>";
+            labelsxml += "<i:label id=\"" + key + "\" color=\"" + color + "\">" + xmlEscape(name) +  "</i:label>";
         }
         
         labelsxml += "</i:mails-labels>";
@@ -81,13 +51,13 @@ let SIMailsLabels = {
     synchronizeFromServer: function SIML_synchronizeFromServer() {
         let mailsLabelsListener = {
             onDAVQueryComplete: function onDAVQueryComplete(status, response, headers) {
-                if (status == 207) {
-                    let prefService = Components.classes["@mozilla.org/preferences-service;1"]
-                        .getService(Components.interfaces.nsIPrefBranch);
+                if (status == 207) {                    
+                    let tagArray = MailServices.tags.getAllTags({});
                     
-                    prefService.deleteBranch("mailnews.tags");
+                    for (let j = 0; j < tagArray.length; j++) {
+                        MailServices.tags.deleteKey( tagArray[j].key );
+                    }
                     
-  
                     // We'll get something like that:
                     //
                     //  <n1:label color="#f00" id="$label1">Important</n1:label>
@@ -105,9 +75,28 @@ let SIMailsLabels = {
                          let id = label.getAttribute("id");
                          let color = label.getAttribute("color");
                          let name = label.innerHTML;
+                         let tag = null;
 
-                         prefService.setCharPref("mailnews.tags." + id + ".tag", name);
-                         prefService.setCharPref("mailnews.tags." + id + ".color", color.toUpperCase());
+                         try {
+                             tag = MailServices.tags.getTagForKey(id);
+                         } catch (ex) {
+                             dump("Unable to get mail tag for key: " + id + "\n");
+                         }
+                         
+                         if (tag != null) {
+                             let current_color =  MailServices.tags.getColorForKey(id);
+                             let current_name = MailServices.tags.getTagForKey(id);
+                             
+                             if (name.toUpperCase() != current_name.toUpperCase()) {
+                                 MailServices.tags.setTagForKey(id, name);
+                             }
+
+                             if (color.toUpperCase() != current_color.toUpperCase()) {
+                                 MailServices.tags.setColorForKey(id, color);
+                             }
+                         } else {
+                             MailServices.tags.addTagForKey(id, name, color, '');
+                         }
                      }
                 }
             }
