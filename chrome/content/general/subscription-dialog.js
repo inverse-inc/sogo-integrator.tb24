@@ -133,11 +133,7 @@ let userReportTarget = {
         if (result) {
             let parser = Components.classes["@mozilla.org/xmlextras/domparser;1"]
                                    .createInstance(Components.interfaces.nsIDOMParser);
-            let xmlResult = null;
-            if (result.indexOf("<?xml") == 0) {
-                xmlResult = parser.parseFromString(result, "text/xml");
-            }
-
+            let xmlResult = result;
             let treeView;
             if (resourceType == "users")
                 treeView = new UsersTreeView(xmlResult);
@@ -164,10 +160,7 @@ let collectionReportTarget = {
  onDAVQueryComplete: function(status, result, headers, data) {
         let parser = Components.classes["@mozilla.org/xmlextras/domparser;1"]
                                .createInstance(Components.interfaces.nsIDOMParser);
-        let xmlResult = null;
-        if (result.indexOf("<?xml") == 0) {
-            xmlResult = parser.parseFromString(result, "text/xml");
-        }
+        let xmlResult = result;
         data.treeView.parseFolders(data.user, xmlResult);
         let tree = document.getElementById("subscriptionTree");
         tree.view = data.treeView;
@@ -187,7 +180,7 @@ function onStartSearch() {
                  + xmlEscape(searchInput.value)
                  + "\"/>"
                  + "</user-query>");
-    let report = new sogoWebDAV(sogoBaseURL(), userReportTarget);
+    let report = new sogoWebDAV(sogoBaseURL(), userReportTarget, undefined, undefined, false);
     report.report("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                   + query, false);
 }
@@ -643,7 +636,7 @@ SubscriptionTreeView.prototype = {
                                  + "</prop-match></collection-filter>"
                                  + "</collection-query>");
                     let report = new sogoWebDAV(principal, collectionReportTarget,
-                                                { treeView: this, user: userData["id"] });
+                                                { treeView: this, user: userData["id"] }, undefined, false);
                     report.report("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                                   + query, false);
                 }

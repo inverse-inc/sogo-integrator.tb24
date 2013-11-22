@@ -67,7 +67,7 @@ directoryChecker.prototype = {
         }
     },
     start: function start() {
-        let propfind = new sogoWebDAV(this.baseURL + this.type, this);
+        let propfind = new sogoWebDAV(this.baseURL + this.type, this, undefined, undefined, true);
         let baseProperties = ["DAV: owner", "DAV: resourcetype",
                               "DAV: displayname"];
         let properties;

@@ -37,7 +37,7 @@ function onOverlayAccept() {
 			&& newFolderURL == folderURL
 			&& newName != originalName) {
 		var proppatch = new sogoWebDAV(newFolderURL,
-																	 new renameTarget(this));
+																	 new renameTarget(this), undefined, undefined, true);
 		proppatch.proppatch("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 												+ "<propertyupdate xmlns=\"DAV:\">"
 												+ "<set>"

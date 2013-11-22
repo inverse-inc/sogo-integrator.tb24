@@ -20,7 +20,7 @@ let SIContactCategories = {
         let cats = SCContactCategories.getCategoriesAsArray();
         if (cats) {
             let collectionURL = sogoBaseURL() + "Contacts/";
-	    let proppatch = new sogoWebDAV(collectionURL, null, null, true);
+	    let proppatch = new sogoWebDAV(collectionURL, null, null, true, true);
             let catxml = "<i:contacts-categories>";
             for (let i = 0; i < cats.length; i++) {
                 catxml += "<i:category>" + xmlEscape(cats[i]) + "</i:category>";
@@ -56,7 +56,7 @@ let SIContactCategories = {
         };
 
         let properties = ["urn:inverse:params:xml:ns:inverse-dav contacts-categories"];
-        let propfind = new sogoWebDAV(sogoBaseURL() + "Contacts", categoriesListener);
+        let propfind = new sogoWebDAV(sogoBaseURL() + "Contacts", categoriesListener, undefined, undefined, true);
         propfind.propfind(properties, false);
     }
 };

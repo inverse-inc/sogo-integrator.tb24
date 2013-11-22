@@ -26,7 +26,7 @@ function createOperation(folderURL, displayName, handler) {
 createOperation.prototype = {
  start: function cO_start() {
 		this.onDAVQueryComplete = this.onMkColQueryComplete;
-		var mkcol = new sogoWebDAV(this.folderURL, this);
+		var mkcol = new sogoWebDAV(this.folderURL, this, undefined, undefined, true);
 		mkcol.mkcol();
 	},
 
@@ -34,7 +34,7 @@ createOperation.prototype = {
  onMkColQueryComplete: function(status, result) {
 		if (status == 201) {
 			this.onDAVQueryComplete = this.onPropPatchQueryComplete;
-			var proppatch = new sogoWebDAV(this.folderURL, this);
+			var proppatch = new sogoWebDAV(this.folderURL, this, undefined, undefined, true);
 			proppatch.proppatch("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 													+ "<propertyupdate xmlns=\"DAV:\">"
 													+ "<set>"

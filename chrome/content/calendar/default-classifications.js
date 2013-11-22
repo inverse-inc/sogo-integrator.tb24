@@ -19,7 +19,7 @@ Components.utils.import("resource://calendar/modules/calUtils.jsm");
 let SICalendarDefaultClassifications = {
     synchronizeToServer: function SICC_synchronizeToServer() {
         let collectionURL = sogoBaseURL() + "Calendar/";
-	let proppatch = new sogoWebDAV(collectionURL, null, null, true);
+	let proppatch = new sogoWebDAV(collectionURL, null, null, true, true);
         let values = { "events-default-classification": "events",
                        "tasks-default-classification": "todos" };
         let classxml = "";
@@ -63,7 +63,7 @@ let SICalendarDefaultClassifications = {
 
         let properties = ["urn:inverse:params:xml:ns:inverse-dav events-default-classification",
                           "urn:inverse:params:xml:ns:inverse-dav tasks-default-classification"];
-        let propfind = new sogoWebDAV(sogoBaseURL() + "Calendar/", categoriesListener);
+        let propfind = new sogoWebDAV(sogoBaseURL() + "Calendar/", categoriesListener, undefined, undefined, true);
         propfind.propfind(properties, false);
     }
 };
