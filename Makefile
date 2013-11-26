@@ -27,6 +27,7 @@ custom-build:
 	    exit 1; \
 	  fi; fi
 
+.PHONY: MANIFEST
 MANIFEST:
 	@echo chrome.manifest > $@
 	@echo NEWS >> $@
