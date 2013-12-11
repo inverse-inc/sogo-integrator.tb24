@@ -16,5 +16,12 @@
         em:id="sogo-connector@inverse.ca"
         em:name="SOGo Connector"/>
     </li>
+<!--
+    <li>
+      <Description
+        em:id="{e2fda1a4-762b-4020-b5ad-a41df1933103}"
+        em:name="Lightning"/>
+    </li>
+-->
   </Seq>
 </RDF>
