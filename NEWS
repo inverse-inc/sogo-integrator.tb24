@@ -1,3 +1,7 @@
+24.0.4
+------
+- fixed the synchronization of mail tags when creating them from the "New Tag..." popup menu
+
 24.0.1
 ------
 - we now synchronize mails labels to and from SOGo
