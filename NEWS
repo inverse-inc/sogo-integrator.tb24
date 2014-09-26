@@ -1,3 +1,7 @@
+24.0.7
+------
+- version bump to match SOGo Connector
+
 24.0.6
 ------
 - we now honor "sogo-integrator.disable-send-invitations-checkbox" correctly and in case
